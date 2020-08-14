@@ -1,0 +1,26 @@
+在entry-runtime-with-compiler.js中，可以看到
+
+![image.png](https://cdn.nlark.com/yuque/0/2020/png/2359237/1597387909653-6ff1e1c3-6781-4437-a843-0ea753930c11.png)
+
+再向上找这个引入的Vue：
+
+![image.png](https://cdn.nlark.com/yuque/0/2020/png/2359237/1597387946549-ec639886-5436-4c95-9cf0-078afdaa017e.png)
+
+再向上找这个引入的Vue：
+![image.png](https://cdn.nlark.com/yuque/0/2020/png/2359237/1597387984120-fa44ed52-e8c6-40cf-9bcc-9a97bf922bc0.png)
+
+再向上找这个引入的Vue：
+
+![image.png](https://cdn.nlark.com/yuque/0/2020/png/2359237/1597388048054-b454b872-ca63-4be2-8895-2b61cd82d703.png)
+
+终于找到了Vue的最初始声明及定义。
+
+可以看到这里是通过构造函数的方式定义Vue这个对象的。
+
+
+
+一般来说，在我们的main.js中new Vue()时就是调用这个构造函数进行创建一个Vue实例。![image.png](https://cdn.nlark.com/yuque/0/2020/png/2359237/1597388131424-e1705f61-2043-492a-a647-047791ec4582.png)创建实例时就开始进行一系列的初始化操作了。而这个_init方法是哪里来的呢？
+
+声明Vue的下面还有一些初始化的操作：![image.png](https://cdn.nlark.com/yuque/0/2020/png/2359237/1597388377205-5c8f1321-cf92-4ce5-b9c9-df3fbadf675f.png)
+
+这个_init方法就是从这个initMixin中绑定到Vue的原型链上的：![image.png](https://cdn.nlark.com/yuque/0/2020/png/2359237/1597388445307-fb5fb1be-e548-4492-ac53-97387a9d6157.png)
