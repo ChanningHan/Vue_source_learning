@@ -1,75 +1,60 @@
-​	现在已经看了两个主要的文件,`core/instance/index.js` 文件以及 `core/index.js` 文件
- 前者主要作用是定义Vue构造函数并对其原型添加属性和方法，即实例属性和实例方法。后者主要作用是为Vue添加全局API，也就是静态的方法和属性。core目录下的代码都是与平台无关的，所以前面两个都在包含核心的Vue，且是与平台无关的。但Vue是一个Multiplatform的项目（Vue和Weex），不同平台可能会内置不同的组件、指令，或者一些平台特有的功能等等，那么这就需要对 `Vue` 根据不同的平台进行平台化地包装。
+​		在看完 `runtime/index.js` 文件之后，其实 `运行时` 版本的 `Vue` 构造函数就已经“成型了”。我们可以打开 `entry-runtime.js` 这个入口文件，这个文件只有两行代码：
 
-​	接下来继续回溯对Vue的引用，准备看`platforms/web/runtime/index.js` 文件。
+```js
+import Vue from './runtime/index'
 
-​	首先是：
+export default Vue
+```
 
-![image-20200814180419200](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814180419200.png)
+​		可以发现，`运行时` 版的入口文件，导出的 `Vue` 就到 `./runtime/index.js` 文件为止。然而我们所选择的并不仅仅是运行时版，而是完整版的 `Vue`，入口文件是 `entry-runtime-with-compiler.js`，我们知道完整版和运行时版的区别就在于 `compiler`，所以其实在我们看这个文件的代码之前也能够知道这个文件的作用：*就是在运行时版的基础上添加 `compiler`*
 
-还记得Vue.config是在initGlobalAPI方法中赋值的，赋值以后的Vue.config长这样：
+​		打开 `entry-runtime-with-compiler.js` 文件：
 
-![image-20200814180529083](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814180529083.png)
+```js
+// ... 其他 import 语句
 
-我们可以看到，从 `core/config.js` 文件导出的 `config` 对象，大部分属性都是初始化了一个初始值，并且有些注释比如：
+// 导入 运行时 的 Vue
+import Vue from './runtime/index'
 
-![image-20200814180722394](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814180722394.png)
+// ... 其他 import 语句
 
-意思有些配置属性是与平台相关的，在后面包装平台化时很可能会被覆盖掉。
+// 从 ./compiler/index.js 文件导入 compileToFunctions
+import { compileToFunctions } from './compiler/index'
 
-那么刚刚第一段代码就是去覆盖从core/config.js导出的config对象，具体做了什么可以先不看。
+// 根据 id 获取元素的 innerHTML
+const idToTemplate = cached(id => {
+  const el = query(id)
+  return el && el.innerHTML
+})
 
+// 使用 mount 变量缓存 Vue.prototype.$mount 方法
+const mount = Vue.prototype.$mount
+// 重写 Vue.prototype.$mount 方法
+Vue.prototype.$mount = function (
+  el?: string | Element,
+  hydrating?: boolean
+): Component {
+  // ... 函数体省略
+}
 
+/**
+ * 获取元素的 outerHTML
+ */
+function getOuterHTML (el: Element): string {
+  if (el.outerHTML) {
+    return el.outerHTML
+  } else {
+    const container = document.createElement('div')
+    container.appendChild(el.cloneNode(true))
+    return container.innerHTML
+  }
+}
 
-接着是这两句代码：
+// 在 Vue 上添加一个全局API `Vue.compile` 其值为上面导入进来的 compileToFunctions
+Vue.compile = compileToFunctions
 
-![image-20200814180957498](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814180957498.png)
+// 导出 Vue
+export default Vue
+```
 
-在混合之前，Vue.options长这样：
-
-![image-20200814181204153](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814181204153.png)
-
-刚刚这两句就是把platformDirectives和platformComponents的属性混合到Vue.options.directives和Vue.options.components。
-
-也就是把平台的指令和组件添加进来，
-
-platformDirectives:
-
-![image-20200814181354665](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814181354665.png)
-
-platformComponents:
-
-![image-20200814181416041](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814181416041.png)
-
-extend后Vue.options变成这样：
-
-![image-20200814181551833](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814181551833.png)
-
-
-
-所以这两句就是为Vue.opstions上添加web平台运行时的特定组件和指令。
-
-____
-
-接下来继续看代码：
-
-![image-20200814181949161](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814181949161.png)
-
-
-
-首先在 `Vue.prototype` 上添加 `__patch__` 方法，如果在浏览器环境运行的话，这个方法的值为 `patch` 函数，否则是一个空函数 `noop`。patch函数是把vnode渲染成真实dom的方法，由于在服务器端渲染的时候没有DOM，所以不需要执行patch方法。
-
-然后又在 `Vue.prototype` 上添加了 `$mount` 方法，我们暂且不关心 `$mount` 方法的内容和作用。
-
-再往下的一段代码是 `vue-devtools` 的全局钩子，它被包裹在 `setTimeout` 中，最后导出了 `Vue`。
-
-
-
-现在我们就看完了 `platforms/web/runtime/index.js` 文件，该文件的作用是对 `Vue` 进行平台化地包装：
-
-
-
-- 设置平台化的 `Vue.config`。
-- 在 `Vue.options` 上混合了两个指令(`directives`)，分别是 `model` 和 `show`。
-- 在 `Vue.options` 上混合了两个组件(`components`)，分别是 `Transition` 和 `TransitionGroup`。
-- 在 `Vue.prototype` 上添加了两个方法：`__patch__` 和 `$mount`。
+​		这个文件运行下来，对 `Vue` 的影响有两个，第一个影响是它重写了 `Vue.prototype.$mount` 方法；第二个影响是添加了 `Vue.compile` 全局API。其中通过compileToFunctions这个函数将手写的template模板编译成render函数，那么这个方法是在重写的$mount当中，可以理解为完整版的$mount就是在执行之前的$mount方法之前将template模板转成了render函数。

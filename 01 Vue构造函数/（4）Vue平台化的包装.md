@@ -1,5 +1,6 @@
-​	现在已经看了两个主要的文件,`core/instance/index.js` 文件以及 `core/index.js` 文件
- 前者主要作用是定义Vue构造函数并对其原型添加属性和方法，即实例属性和实例方法。后者主要作用是为Vue添加全局API，也就是静态的方法和属性。core目录下的代码都是与平台无关的，所以前面两个都在包含核心的Vue，且是与平台无关的。但Vue是一个Multiplatform的项目（Vue和Weex），不同平台可能会内置不同的组件、指令，或者一些平台特有的功能等等，那么这就需要对 `Vue` 根据不同的平台进行平台化地包装。
+​	现在已经看了两个主要的文件,`core/instance/index.js` 文件以及 `core/index.js` 文件。
+
+​	前者主要作用是定义Vue构造函数并对其原型添加属性和方法，即实例属性和实例方法。后者主要作用是为Vue添加全局API，也就是静态的方法和属性。core目录下的代码都是与平台无关的，所以前面两个都在包含核心的Vue，且是与平台无关的。但Vue是一个Multiplatform的项目（Vue和Weex），不同平台可能会内置不同的组件、指令，或者一些平台特有的功能等等，那么这就需要对 `Vue` 根据不同的平台进行平台化地包装。
 
 ​	接下来继续回溯对Vue的引用，准备看`platforms/web/runtime/index.js` 文件。
 
@@ -7,21 +8,21 @@
 
 ![image-20200814180419200](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814180419200.png)
 
-还记得Vue.config是在initGlobalAPI方法中赋值的，赋值以后的Vue.config长这样：
+​		还记得Vue.config是在initGlobalAPI方法中赋值的，赋值以后的Vue.config长这样：
 
 ![image-20200814180529083](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814180529083.png)
 
-我们可以看到，从 `core/config.js` 文件导出的 `config` 对象，大部分属性都是初始化了一个初始值，并且有些注释比如：
+​		我们可以看到，从 `core/config.js` 文件导出的 `config` 对象，大部分属性都是初始化了一个初始值，并且有些注释比如：
 
 ![image-20200814180722394](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814180722394.png)
 
-意思有些配置属性是与平台相关的，在后面包装平台化时很可能会被覆盖掉。
+​		意思有些配置属性是与平台相关的，在后面包装平台化时很可能会被覆盖掉。
 
 那么刚刚第一段代码就是去覆盖从core/config.js导出的config对象，具体做了什么可以先不看。
 
 
 
-接着是这两句代码：
+​		接着是这两句代码：
 
 ![image-20200814180957498](C:\Users\DM\AppData\Roaming\Typora\typora-user-images\image-20200814180957498.png)
 
